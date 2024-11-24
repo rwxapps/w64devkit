@@ -3,12 +3,12 @@ FROM debian:bookworm-slim
 ARG VERSION=2.0.0
 ARG PREFIX=/w64devkit
 ARG Z7_VERSION=2301
-ARG BINUTILS_VERSION=2.43
+ARG BINUTILS_VERSION=2.42
 ARG BUSYBOX_VERSION=FRP-5467-g9376eebd8
 ARG CTAGS_VERSION=6.0.0
-ARG EXPAT_VERSION=2.6.3
+ARG EXPAT_VERSION=2.6.2
 ARG GCC_VERSION=14.2.0
-ARG GDB_VERSION=15.2
+ARG GDB_VERSION=15.1
 ARG GMP_VERSION=6.3.0
 ARG LIBICONV_VERSION=1.17
 ARG MAKE_VERSION=4.4.1
@@ -16,7 +16,6 @@ ARG MINGW_VERSION=12.0.0
 ARG MPC_VERSION=1.3.1
 ARG MPFR_VERSION=4.2.1
 ARG PDCURSES_VERSION=3.9
-ARG VIM_VERSION=9.0
 
 RUN apt-get update && apt-get install --yes --no-install-recommends \
   build-essential curl libgmp-dev libmpc-dev libmpfr-dev m4 p7zip-full
@@ -35,7 +34,6 @@ RUN curl --insecure --location --remote-name-all --remote-header-name \
     https://ftp.gnu.org/gnu/make/make-$MAKE_VERSION.tar.gz \
     https://ftp.gnu.org/gnu/libiconv/libiconv-$LIBICONV_VERSION.tar.gz \
     https://frippery.org/files/busybox/busybox-w32-$BUSYBOX_VERSION.tgz \
-    http://ftp.vim.org/pub/vim/unix/vim-$VIM_VERSION.tar.bz2 \
     https://github.com/universal-ctags/ctags/archive/refs/tags/v$CTAGS_VERSION.tar.gz \
     https://downloads.sourceforge.net/project/mingw-w64/mingw-w64/mingw-w64-release/mingw-w64-v$MINGW_VERSION.tar.bz2 \
     https://downloads.sourceforge.net/project/pdcurses/pdcurses/$PDCURSES_VERSION/PDCurses-$PDCURSES_VERSION.tar.gz
@@ -54,8 +52,7 @@ RUN sha256sum -c $PREFIX/src/SHA256SUMS \
  && tar xJf mpfr-$MPFR_VERSION.tar.xz \
  && tar xzf make-$MAKE_VERSION.tar.gz \
  && tar xjf mingw-w64-v$MINGW_VERSION.tar.bz2 \
- && tar xzf PDCurses-$PDCURSES_VERSION.tar.gz \
- && tar xjf vim-$VIM_VERSION.tar.bz2
+ && tar xzf PDCurses-$PDCURSES_VERSION.tar.gz
 COPY src/w64devkit.c src/w64devkit.ico src/libmemory.c src/libchkstk.S \
      src/alias.c src/debugbreak.c src/pkg-config.c src/vc++filt.c \
      src/peports.c src/profile $PREFIX/src/
@@ -105,7 +102,7 @@ RUN cat $PREFIX/src/gcc-*.patch | patch -d/gcc-$GCC_VERSION -p1 \
         --enable-static \
         --disable-shared \
         --with-pic \
-        --enable-languages=c,c++,fortran \
+        --enable-languages=c,c++ \
         --enable-libgomp \
         --enable-threads=posix \
         --enable-version-specific-runtime-libs \
@@ -267,7 +264,7 @@ RUN /gcc-$GCC_VERSION/configure \
         --with-mpc-lib=/deps/lib \
         --with-mpfr-include=/deps/include \
         --with-mpfr-lib=/deps/lib \
-        --enable-languages=c,c++,fortran \
+        --enable-languages=c,c++ \
         --enable-libgomp \
         --enable-threads=posix \
         --enable-version-specific-runtime-libs \
@@ -305,7 +302,7 @@ RUN $ARCH-gcc -DEXE=gcc.exe -DCMD=cc \
         -o $PREFIX/bin/c89.exe $PREFIX/src/alias.c -lkernel32 \
  && printf '%s\n' addr2line ar as c++filt cpp dlltool dllwrap elfedit g++ \
       gcc gcc-ar gcc-nm gcc-ranlib gcov gcov-dump gcov-tool ld nm objcopy \
-      objdump ranlib readelf size strings strip windmc windres gfortran \
+      objdump ranlib readelf size strings strip windmc windres \
     | xargs -I{} -P$(nproc) \
           $ARCH-gcc -DEXE={}.exe -DCMD=$ARCH-{} \
             -Os -fno-asynchronous-unwind-tables \
@@ -420,27 +417,6 @@ RUN $ARCH-gcc -Os -fno-asynchronous-unwind-tables -Wl,--gc-sections -s \
       unlzma unlzop unxz unzip uptime usleep uudecode uuencode watch \
       wc wget which whoami whois xargs xz xzcat yes zcat \
     | xargs -I{} cp alias.exe $PREFIX/bin/{}.exe
-
-# TODO: Either somehow use $VIM_VERSION or normalize the workdir
-WORKDIR /vim90/src
-RUN ARCH= make -j$(nproc) -f Make_ming.mak \
-        OPTIMIZE=SIZE STATIC_STDCPLUS=yes HAS_GCC_EH=no \
-        UNDER_CYGWIN=yes CROSS=yes CROSS_COMPILE=$ARCH- \
-        FEATURES=HUGE VIMDLL=yes NETBEANS=no WINVER=0x0501 \
- && $ARCH-strip vimrun.exe \
- && rm -rf ../runtime/tutor/tutor.* \
- && cp -r ../runtime $PREFIX/share/vim \
- && cp vimrun.exe gvim.exe vim.exe *.dll $PREFIX/share/vim/ \
- && cp xxd/xxd.exe $PREFIX/bin \
- && printf '@set SHELL=\r\n@start "" "%%~dp0/../share/vim/gvim.exe" %%*\r\n' \
-        >$PREFIX/bin/gvim.bat \
- && printf '@set SHELL=\r\n@"%%~dp0/../share/vim/vim.exe" %%*\r\n' \
-        >$PREFIX/bin/vim.bat \
- && printf '@set SHELL=\r\n@"%%~dp0/../share/vim/vim.exe" %%*\r\n' \
-        >$PREFIX/bin/vi.bat \
- && printf '@vim -N -u NONE "+read %s" "+write" "%s"\r\n' \
-        '$VIMRUNTIME/tutor/tutor' '%TMP%/tutor%RANDOM%' \
-        >$PREFIX/bin/vimtutor.bat
 
 WORKDIR /ctags-$CTAGS_VERSION
 RUN sed -i /RT_MANIFEST/d win32/ctags.rc \

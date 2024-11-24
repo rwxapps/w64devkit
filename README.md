@@ -1,4 +1,4 @@
-# Portable C, C++, and Fortran Development Kit for x64 and x86 Windows
+# Portable C and C++ Development Kit for x64 and x86 Windows
 
 [w64devkit][] is a Dockerfile that builds from source a small, portable
 development suite for creating C and C++ applications on and for x86 and
@@ -10,7 +10,6 @@ Included tools:
 * [GDB][gdb] : debugger
 * [GNU Make][make] : standard build tool
 * [busybox-w32][bb] : standard unix utilities, including sh
-* [Vim][vim] : powerful text editor
 * [Universal Ctags][ctags] : source navigation
 
 It is an MSVCRT toolchain with pthreads, C++11 threads, and OpenMP. All
@@ -96,7 +95,6 @@ binaries more compressible and *theoretically* faster loading. See also:
 
 ## Recommended downloadable, offline documentation
 
-With a few exceptions, such as Vim's built-in documentation (`:help`),
 w64devkit does not include documentation. However, you need not forgo
 offline documentation alongside your offline development tools. This is a
 list of recommended, no-cost, downloadable documentation complementing
@@ -227,6 +225,5 @@ binaries.
 [names]: https://learn.microsoft.com/en-us/cpp/build/reference/decorated-names
 [san]: http://mingw-w64.org/doku.php/contribute#sanitizers_asan_tsan_usan
 [san2]: https://groups.google.com/forum/#!topic/address-sanitizer/q0e5EBVKZT4
-[vim]: https://www.vim.org/
 [w64]: http://mingw-w64.org/
 [w64devkit]: https://github.com/skeeto/w64devkit
